@@ -1,0 +1,15 @@
+[package]
+name = "sse-actix-web"
+version = "0.0.1"
+authors = ["Bevan Hunt <bevan@bevanhunt.com>"]
+edition = "2018"
+keywords = ["sse", "actix-web", "actix", "server side events"]
+license = "MIT"
+description = "SSE for actix-web"
+repository = "https://github.com/apibillme/sse-actix-web"
+
+[dependencies]
+actix-rt = "1.0.0"
+actix-web = "2.0.0-alpha.6"
+futures = "0.3.1"
+tokio = "0.2.4"
