@@ -3,7 +3,7 @@ use std::sync::Mutex;
 use std::task::{Context, Poll};
 use std::time::Duration;
 
-use actix_web::web::{Bytes, Data, Path};
+use actix_web::web::{Bytes, Data};
 use actix_web::{Error, HttpResponse, Responder};
 use futures::{Stream, StreamExt};
 use tokio::sync::mpsc::{channel, Receiver, Sender};
@@ -19,12 +19,10 @@ pub async fn new_client(broadcaster: Data<Mutex<Broadcaster>>) -> impl Responder
 }
 
 pub async fn broadcast(
-    msg: Path<String>,
+    msg: &str,
     broadcaster: Data<Mutex<Broadcaster>>,
-) -> impl Responder {
-    broadcaster.lock().unwrap().send(&msg.into_inner());
-
-    HttpResponse::Ok().body("msg sent")
+) -> () {
+    broadcaster.lock().unwrap().send(&msg);
 }
 
 pub struct Broadcaster {
