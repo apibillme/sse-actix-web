@@ -9,8 +9,8 @@ use futures::{Stream, StreamExt};
 use tokio::sync::mpsc::{channel, Receiver, Sender};
 use tokio::time::{interval_at, Instant};
 
-pub async fn new_client(broadcaster: Data<Mutex<Broadcaster>>) -> impl Responder {
-    let rx = broadcaster.lock().unwrap().new_client();
+pub async fn new_client(broadcaster: Data<Mutex<Broadcaster>>, msg: &str) -> impl Responder {
+    let rx = broadcaster.lock().unwrap().new_client(msg);
 
     HttpResponse::Ok()
         .header("content-type", "text/event-stream")
@@ -67,11 +67,13 @@ impl Broadcaster {
         self.clients = ok_clients;
     }
 
-    pub fn new_client(&mut self) -> Client {
+    pub fn new_client(&mut self, msg: &str) -> Client {
         let (tx, rx) = channel(100);
 
+        let msg = Bytes::from(["data: ", msg, "\n\n"].concat());
+
         tx.clone()
-            .try_send(Bytes::from("data: connected\n\n"))
+            .try_send(msg)
             .unwrap();
 
         self.clients.push(tx);
