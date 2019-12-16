@@ -9,8 +9,8 @@ use futures::{Stream, StreamExt};
 use tokio::sync::mpsc::{channel, Receiver, Sender};
 use tokio::time::{interval_at, Instant};
 
-pub async fn new_client(broadcaster: Data<Mutex<Broadcaster>>, msg: &str) -> impl Responder {
-    let rx = broadcaster.lock().unwrap().new_client(msg);
+pub async fn new_client(broadcaster: Data<Mutex<Broadcaster>>) -> impl Responder {
+    let rx = broadcaster.lock().unwrap().new_client();
 
     HttpResponse::Ok()
         .header("content-type", "text/event-stream")
@@ -19,7 +19,7 @@ pub async fn new_client(broadcaster: Data<Mutex<Broadcaster>>, msg: &str) -> imp
 }
 
 pub async fn broadcast(
-    msg: &str,
+    msg: String,
     broadcaster: Data<Mutex<Broadcaster>>,
 ) -> () {
     broadcaster.lock().unwrap().send(&msg);
@@ -27,12 +27,13 @@ pub async fn broadcast(
 
 pub struct Broadcaster {
     clients: Vec<Sender<Bytes>>,
+    msg: String
 }
 
 impl Broadcaster {
-    pub fn create() -> Data<Mutex<Self>> {
+    pub fn create(msg: String) -> Data<Mutex<Self>> {
         // Data ≃ Arc
-        let me = Data::new(Mutex::new(Broadcaster::new()));
+        let me = Data::new(Mutex::new(Broadcaster::new(msg)));
 
         // ping clients every 10 seconds to see if they are alive
         Broadcaster::spawn_ping(me.clone());
@@ -40,9 +41,10 @@ impl Broadcaster {
         me
     }
 
-    pub fn new() -> Self {
+    pub fn new(msg: String) -> Self {
         Broadcaster {
             clients: Vec::new(),
+            msg: msg
         }
     }
 
@@ -67,10 +69,10 @@ impl Broadcaster {
         self.clients = ok_clients;
     }
 
-    pub fn new_client(&mut self, msg: &str) -> Client {
+    pub fn new_client(&mut self) -> Client {
         let (tx, rx) = channel(100);
 
-        let msg = Bytes::from(["data: ", msg, "\n\n"].concat());
+        let msg = Bytes::from(["data: ", &*self.msg, "\n\n"].concat());
 
         tx.clone()
             .try_send(msg)
