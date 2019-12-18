@@ -27,13 +27,12 @@ pub async fn broadcast(
 
 pub struct Broadcaster {
     clients: Vec<Sender<Bytes>>,
-    msg: String
 }
 
 impl Broadcaster {
-    pub fn create(msg: String) -> Data<Mutex<Self>> {
+    pub fn create() -> Data<Mutex<Self>> {
         // Data ≃ Arc
-        let me = Data::new(Mutex::new(Broadcaster::new(msg)));
+        let me = Data::new(Mutex::new(Broadcaster::new()));
 
         // ping clients every 10 seconds to see if they are alive
         Broadcaster::spawn_ping(me.clone());
@@ -41,10 +40,9 @@ impl Broadcaster {
         me
     }
 
-    pub fn new(msg: String) -> Self {
+    pub fn new() -> Self {
         Broadcaster {
-            clients: Vec::new(),
-            msg: msg
+            clients: Vec::new()
         }
     }
 
@@ -72,7 +70,7 @@ impl Broadcaster {
     pub fn new_client(&mut self) -> Client {
         let (tx, rx) = channel(100);
 
-        let msg = Bytes::from(["data: ", &*self.msg, "\n\n"].concat());
+        let msg = Bytes::from([":connected \n\n"].concat());
 
         tx.clone()
             .try_send(msg)
