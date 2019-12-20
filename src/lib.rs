@@ -14,6 +14,7 @@ pub async fn new_client(broadcaster: Data<Mutex<Broadcaster>>) -> impl Responder
 
     HttpResponse::Ok()
         .header("content-type", "text/event-stream")
+        .header("Access-Control-Allow-Origin",  "*")
         .no_chunking()
         .streaming(rx)
 }
