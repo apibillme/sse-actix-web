@@ -19,10 +19,11 @@ pub async fn new_client(broadcaster: Data<Mutex<Broadcaster>>) -> impl Responder
 }
 
 pub async fn broadcast(
+    event: String,
     msg: String,
     broadcaster: Data<Mutex<Broadcaster>>,
 ) -> () {
-    broadcaster.lock().unwrap().send(&msg);
+    broadcaster.lock().unwrap().send(&event, &msg);
 }
 
 pub struct Broadcaster {
@@ -80,8 +81,8 @@ impl Broadcaster {
         Client(rx)
     }
 
-    pub fn send(&self, msg: &str) {
-        let msg = Bytes::from(["data: ", msg, "\n\n"].concat());
+    pub fn send(&self, event: &str, msg: &str) {
+        let msg = Bytes::from(["event: ", event, "\n", "data: ", msg, "\n\n"].concat());
 
         for client in self.clients.iter() {
             client.clone().try_send(msg.clone()).unwrap_or(());
