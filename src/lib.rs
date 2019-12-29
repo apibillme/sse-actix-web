@@ -9,8 +9,8 @@ use futures::{Stream, StreamExt};
 use tokio::sync::mpsc::{channel, Receiver, Sender};
 use tokio::time::{interval_at, Instant};
 
-pub async fn new_client(broadcaster: Data<Mutex<Broadcaster>>) -> impl Responder {
-    let rx = broadcaster.lock().unwrap().new_client();
+pub async fn new_client(evt: &str, msg: &str, broadcaster: Data<Mutex<Broadcaster>>) -> impl Responder {
+    let rx = broadcaster.lock().unwrap().new_client(evt, msg);
 
     HttpResponse::Ok()
         .header("content-type", "text/event-stream")
@@ -70,10 +70,10 @@ impl Broadcaster {
         self.clients = ok_clients;
     }
 
-    pub fn new_client(&mut self) -> Client {
+    pub fn new_client(&mut self, evt: &str, msg: &str) -> Client {
         let (tx, rx) = channel(100);
 
-        let msg = Bytes::from(["event: internal_status\ndata: connected\n\n"].concat());
+        let msg = Bytes::from(["event: ", evt, "\ndata: ", msg, "\n\n"].concat());
 
         tx.clone()
             .try_send(msg)
@@ -83,8 +83,8 @@ impl Broadcaster {
         Client(rx)
     }
 
-    pub fn send(&self, event: &str, msg: &str) {
-        let msg = Bytes::from(["event: ", event, "\n", "data: ", msg, "\n\n"].concat());
+    pub fn send(&self, evt: &str, msg: &str) {
+        let msg = Bytes::from(["event: ", evt, "\n", "data: ", msg, "\n\n"].concat());
 
         for client in self.clients.iter() {
             client.clone().try_send(msg.clone()).unwrap_or(());
