@@ -2,23 +2,13 @@ use std::pin::Pin;
 use std::sync::Mutex;
 use std::task::{Context, Poll};
 use std::time::Duration;
+use std::collections::HashMap;
 
 use actix_web::web::{Bytes, Data};
-use actix_web::{Error, HttpResponse, Responder};
+use actix_web::{Error};
 use futures::{Stream, StreamExt};
 use tokio::sync::mpsc::{channel, Receiver, Sender};
 use tokio::time::{interval_at, Instant};
-
-pub async fn new_client(evt: &str, msg: &str, broadcaster: Data<Mutex<Broadcaster>>) -> impl Responder {
-    let rx = broadcaster.lock().unwrap().new_client(evt, msg);
-
-    HttpResponse::Ok()
-        .header("content-type", "text/event-stream")
-        .header("Access-Control-Allow-Origin",  "*")
-        .header("Access-Control-Allow-Credentials", "true")
-        .no_chunking()
-        .streaming(rx)
-}
 
 pub async fn broadcast(
     event: String,
@@ -70,16 +60,19 @@ impl Broadcaster {
         self.clients = ok_clients;
     }
 
-    pub fn new_client(&mut self, evt: &str, msg: &str) -> Client {
+    pub fn new_client(&mut self, collection: HashMap<String, String>) -> Client {
         let (tx, rx) = channel(100);
+        let tx_clone = tx.clone();
 
-        let msg = Bytes::from(["event: ", evt, "\ndata: ", msg, "\n\n"].concat());
+        for (evt, msg) in collection {
+            let msg = Bytes::from(["event: ", &evt, "\ndata: ", &msg, "\n\n"].concat());
 
-        tx.clone()
-            .try_send(msg)
-            .unwrap();
+            tx_clone.clone()
+                .try_send(msg)
+                .unwrap();
 
-        self.clients.push(tx);
+            self.clients.push(tx_clone.clone());
+        }
         Client(rx)
     }
 
