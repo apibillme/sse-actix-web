@@ -7,4 +7,4 @@ This is an SSE implementation for Actix Web
 ## Examples
 
 - https://github.com/apibillme/download-counter-example
-- https://github.com/apibillme/json-sse-actix-web
+- https://github.com/apibillme/broker
