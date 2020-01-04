@@ -18,6 +18,15 @@ pub async fn broadcast(
     broadcaster.lock().unwrap().send(&event, &msg);
 }
 
+pub async fn broadcaster(
+    event: String,
+    msg: String,
+    broadcaster: Broadcaster,
+) -> () {
+    broadcaster.send(&event, &msg);
+}
+
+
 pub struct Broadcaster {
     clients: Vec<Sender<Bytes>>,
 }
