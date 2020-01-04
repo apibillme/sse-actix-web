@@ -10,20 +10,12 @@ use futures::{Stream, StreamExt};
 use tokio::sync::mpsc::{channel, Receiver, Sender};
 use tokio::time::{interval_at, Instant};
 
-pub async fn broadcast(
+pub fn broadcast(
     event: String,
     msg: String,
     broadcaster: Data<Mutex<Broadcaster>>,
 ) -> () {
     broadcaster.lock().unwrap().send(&event, &msg);
-}
-
-pub async fn broadcaster(
-    event: String,
-    msg: String,
-    broadcaster: Broadcaster,
-) -> () {
-    broadcaster.send(&event, &msg);
 }
 
 
