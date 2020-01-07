@@ -65,7 +65,15 @@ impl Broadcaster {
         let (tx, rx) = channel(100);
         let tx_clone = tx.clone();
 
-        for (evt, msg) in collection {
+
+        let mut new_collection : HashMap<String, String> = HashMap::new();
+        if collection.is_empty() {
+            new_collection.insert("internal_status".to_owned(), "connected".to_owned());
+        } else {
+            new_collection = collection;
+        }
+
+        for (evt, msg) in new_collection {
             let msg = Bytes::from(["event: ", &evt, "\ndata: ", &msg, "\n\n"].concat());
 
             tx_clone.clone()
